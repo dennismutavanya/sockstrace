@@ -426,7 +426,7 @@ func main() {
 	if err != nil {
 		logger.Fatal().Msgf("Failed to parse Proxy IPv6 address: %v", err)
 	}
-	
+
 	proxySockaddr4 = netTCPAddrToSockAddr(*proxyFullAddr4)
 	proxySockaddr6 = netTCPAddrToSockAddr(*proxyFullAddr6)
 
