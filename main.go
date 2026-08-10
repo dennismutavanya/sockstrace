@@ -265,24 +265,25 @@ var whitelist = []string{
 // Sets up the CLI command structure
 func setupCLI() {
 	const usage = `
-sockstrace is a tool to trace and monitor network connections made by a program,
+sockstrace is a tool to trace and monitor network connections made by a program.
 
 Usage:
-	sockstrace <program> [flags]
+    sockstrace <program> [sockstrace flags] -- [program arguments...]
+
 Examples:
-	sockstrace wget
-	sockstrace wget --args example.com
-	sockstrace wget --args "--directory-prefix=/home" --args="google.com" (Each argument must be passed separately)
-	sockstrace wget --args example.com --logleaks (Allow Proxy Leaks and log them)
+    sockstrace wget
+    sockstrace wget -- google.com
+    sockstrace wget --logleaks -- google.com --debug -q
+    sockstrace wget --socks-tcp 127.0.0.1:9050 -- https://google.com -q
 
 Sources:
-	- CLI flags
-	- Environment variables (SOCKSTRACE_*) example: SOCKSTRACE_LOGLEAKS=true, SOCKSTRACE_KILL_PROG=true
-	- Config file (YAML) via --config
+    - CLI flags
+    - Environment variables (SOCKSTRACE_*) example: SOCKSTRACE_LOGLEAKS=true, SOCKSTRACE_KILL_PROG=true
+    - Config file (YAML) via --config
 
 Note:
-	- The first argument must always be the program you want to execute.
-	- Use --args to pass extra arguments to the program.
+    - The first argument must always be the program you want to execute.
+    - Use -- to separate sockstrace flags from program arguments.
 
 Flags:
 `
@@ -294,7 +295,6 @@ Flags:
 
 	Flags.String("socks-tcp", "127.0.0.1:9050", "SOCKS TCP4 address")
 	Flags.String("socks-tcp6", "[::1]:9050", "SOCKS TCP6 address (IPv6)")
-	Flags.StringSlice("args", []string{}, "Arguments to pass to the program")
 	Flags.Bool("kill-prog", false, "Kill program on proxy leak (default: false)")
 	Flags.Bool("logleaks", false, "Allow and log proxy leaks (default: false)")
 	Flags.String("redirect", "socks5", "Redirect leaked connections (options: socks5, http)")
@@ -356,6 +356,11 @@ Flags:
 		Flags.Usage()
 		logger.Fatal().Msg("No target program specified. Please provide a program to execute.")
 	}
+
+	args = Flags.Args()[1:]
+
+	logger.Info().Msgf("CLI args: %#v", Flags.Args())
+	logger.Info().Msgf("Program args: %#v", args)
 
 	bindConfigVars()
 	validateCLI()
@@ -2301,7 +2306,6 @@ func bindConfigVars() {
 	socksTCPv4 = K.String("socks-tcp")
 	socksTCPv6 = K.String("socks-tcp6")
 	redirect = K.String("redirect")
-	args = K.Strings("args")
 	killProg = K.Bool("kill-prog")
 	logLeaks = K.Bool("logleaks")
 	killAllTracees = K.Bool("kill-all-tracees")
