@@ -116,13 +116,41 @@ type FullAddress struct {
 }
 
 func main() {
-	// Create a Config and initialize it with default values.
+	// The first argument is always the program to trace.
+	// Use "--" to separate sockstrace flags from program arguments.
+	rawArgs := os.Args[1:]
+
+	if len(rawArgs) == 0 {
+		fmt.Fprintln(os.Stderr, "Usage: sockstrace <program> [sockstrace flags] -- [program arguments...]")
+		os.Exit(1)
+	}
+
+	program := rawArgs[0]
+	configArgs := rawArgs[1:]
+	programArgs := []string{}
+
+	// Everything after "--" belongs to the target program.
+	for i, arg := range configArgs {
+		if arg == "--" {
+			programArgs = configArgs[i+1:]
+			configArgs = configArgs[:i]
+			break
+		}
+	}
+
+	// Let easyconfig parse only sockstrace's own arguments.
+	os.Args = append([]string{os.Args[0], programName}, configArgs...)
+
 	cfg := Config{}
 	config := easyconfig.Configurator{
 		ProgramName: "horklump",
 	}
 
 	config.ParseFatal(&cfg)
+
+	// The target program and its arguments are handled separately.
+	cfg.Program = programName
+	cfg.Args = programArgs
 	dexlogconfig.Init()
 	// initialize authData
 	initializeAuthData()
